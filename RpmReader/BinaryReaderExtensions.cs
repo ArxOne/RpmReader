@@ -15,5 +15,4 @@ public static class BinaryReaderExtensions
         var bytes = reader.ReadBytes(4);
         return BinaryPrimitives.ReadInt32BigEndian(bytes);
     }
-
 }

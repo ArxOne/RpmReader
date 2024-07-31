@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Buffers.Binary;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -79,5 +80,34 @@ internal class Deserializer
         if (memberType.IsEnum)
             return ReadValue(reader, memberInfo, Enum.GetUnderlyingType(memberType));
         throw new NotSupportedException();
+    }
+
+    public object? ReadValue(byte[] blob, int offset, RpmType type, int count)
+    {
+        return type switch
+        {
+            RpmType.Null => null,
+            RpmType.Char => blob[offset],
+            RpmType.Int8 => blob[offset],
+            RpmType.Int16 => BinaryPrimitives.ReadInt16BigEndian(blob[offset..(offset + 2)]),
+            RpmType.Int32 => BinaryPrimitives.ReadInt32BigEndian(blob[offset..(offset + 4)]),
+            RpmType.Int64 => BinaryPrimitives.ReadInt64BigEndian(blob[offset..(offset + 8)]),
+            RpmType.String => ReadZStrings(blob, offset, 1).Single(),
+            RpmType.Bin => blob[offset..(offset + count)].ToArray(),
+            RpmType.StringArray => ReadZStrings(blob, offset, count).ToArray(),
+            RpmType.I18Nstring => ReadZStrings(blob, offset, count).ToArray(),
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+        };
+    }
+
+    private IEnumerable<string> ReadZStrings(byte[] blob, int offset, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            var zeroIndex = Array.IndexOf(blob, (byte)0, offset);
+            var s = Encoding.ASCII.GetString(blob[offset..zeroIndex]);
+            yield return s;
+            offset = zeroIndex + 1;
+        }
     }
 }

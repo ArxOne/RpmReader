@@ -12,8 +12,8 @@ public class RpmHeader
 
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)] public readonly byte[] Magic;
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)] public readonly byte[] Reserved;
-    public int NIndex;
-    public int HSize;
+    public readonly int NIndex;
+    public readonly int HSize;
 
     public bool IsValid => Magic.SequenceEqual(MagicValue) && Reserved.SequenceEqual(ReservedValue);
 }

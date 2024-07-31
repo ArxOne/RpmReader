@@ -7,8 +7,8 @@ using System.Runtime.InteropServices;
 [StructLayout(LayoutKind.Sequential, Pack = 0)]
 public class RpmHeaderIndex
 {
-    public RpmTag Tag;
-    public RpmType Type;
-    public int Offset;
-    public int Count;
+    public readonly RpmTag Tag;
+    public readonly RpmType Type;
+    public readonly int Offset;
+    public readonly int Count;
 }
