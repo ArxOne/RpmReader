@@ -1,5 +1,4 @@
-﻿using System.Reflection.Metadata;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace ArxOne.Rpm;
 
@@ -8,7 +7,7 @@ namespace ArxOne.Rpm;
 [StructLayout(LayoutKind.Sequential, Pack = 0)]
 public class RpmLead
 {
-    private static readonly byte[] MagicValue = new byte[] { 0xED, 0xAB, 0xEE, 0xDB };
+    private static readonly byte[] MagicValue = [0xED, 0xAB, 0xEE, 0xDB];
 
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)] public readonly byte[] Magic;
     public readonly byte Major, Minor;

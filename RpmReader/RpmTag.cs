@@ -1,4 +1,6 @@
-﻿namespace ArxOne.Rpm;
+﻿// ReSharper disable IdentifierTypo
+// ReSharper disable InconsistentNaming
+namespace ArxOne.Rpm;
 
 public enum RpmTag
 {

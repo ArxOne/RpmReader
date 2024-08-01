@@ -7,7 +7,7 @@ namespace ArxOne.Rpm;
 [StructLayout(LayoutKind.Sequential, Pack = 0)]
 public class RpmHeader
 {
-    private static readonly byte[] MagicValue = new byte[] { 0x8E, 0xAD, 0xE8, 0x01 };
+    private static readonly byte[] MagicValue = [0x8E, 0xAD, 0xE8, 0x01];
     private static readonly byte[] ReservedValue = new byte[4];
 
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)] public readonly byte[] Magic;

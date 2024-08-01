@@ -1,5 +1,4 @@
-﻿using System.Buffers.Binary;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -37,12 +36,12 @@ internal class Deserializer
         return o;
     }
 
-    private object ReadValue(BinaryReader reader, PropertyInfo propertyInfo)
+    private static object ReadValue(BinaryReader reader, PropertyInfo propertyInfo)
     {
         return ReadValue(reader, propertyInfo, propertyInfo.PropertyType);
     }
 
-    private object ReadValue(BinaryReader reader, FieldInfo fieldInfo)
+    private static object ReadValue(BinaryReader reader, FieldInfo fieldInfo)
     {
         return ReadValue(reader, fieldInfo, fieldInfo.FieldType);
     }
@@ -50,27 +49,13 @@ internal class Deserializer
     private static object ReadValue(BinaryReader reader, MemberInfo memberInfo, Type memberType)
     {
         var marshalAs = memberInfo.GetCustomAttribute<MarshalAsAttribute>();
-        if (marshalAs is not null)
-        {
-            if (memberType == typeof(string))
-            {
-                return marshalAs.Value switch
-                {
-                    UnmanagedType.ByValTStr => Encoding.ASCII.GetString(reader.ReadBytes(marshalAs.SizeConst)).TrimEnd('\0'),
-                    _ => throw new NotSupportedException()
-                };
-            }
-            if (memberType == typeof(byte[]))
-            {
-                return marshalAs.Value switch
-                {
-                    UnmanagedType.ByValArray => reader.ReadBytes(marshalAs.SizeConst),
-                    _ => throw new NotSupportedException()
-                };
-            }
-            throw new NotSupportedException();
-        }
+        return marshalAs is not null 
+            ? ReadMarshaledValue(reader, memberType, marshalAs) 
+            : ReadSimpleValue(reader, memberType);
+    }
 
+    private static object ReadSimpleValue(BinaryReader reader, Type memberType)
+    {
         if (memberType == typeof(byte))
             return reader.ReadByte();
         if (memberType == typeof(short))
@@ -78,36 +63,28 @@ internal class Deserializer
         if (memberType == typeof(int))
             return reader.ReadInt32BigEndian();
         if (memberType.IsEnum)
-            return ReadValue(reader, memberInfo, Enum.GetUnderlyingType(memberType));
+            return ReadSimpleValue(reader, Enum.GetUnderlyingType(memberType));
         throw new NotSupportedException();
     }
 
-    public object? ReadValue(byte[] blob, int offset, RpmType type, int count)
+    private static object ReadMarshaledValue(BinaryReader reader, Type memberType, MarshalAsAttribute marshalAs)
     {
-        return type switch
+        if (memberType == typeof(string))
         {
-            RpmType.Null => null,
-            RpmType.Char => blob[offset],
-            RpmType.Int8 => blob[offset],
-            RpmType.Int16 => BinaryPrimitives.ReadInt16BigEndian(blob[offset..(offset + 2)]),
-            RpmType.Int32 => BinaryPrimitives.ReadInt32BigEndian(blob[offset..(offset + 4)]),
-            RpmType.Int64 => BinaryPrimitives.ReadInt64BigEndian(blob[offset..(offset + 8)]),
-            RpmType.String => ReadZStrings(blob, offset, 1).Single(),
-            RpmType.Bin => blob[offset..(offset + count)].ToArray(),
-            RpmType.StringArray => ReadZStrings(blob, offset, count).ToArray(),
-            RpmType.I18Nstring => ReadZStrings(blob, offset, count).ToArray(),
-            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
-        };
-    }
-
-    private IEnumerable<string> ReadZStrings(byte[] blob, int offset, int count)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            var zeroIndex = Array.IndexOf(blob, (byte)0, offset);
-            var s = Encoding.ASCII.GetString(blob[offset..zeroIndex]);
-            yield return s;
-            offset = zeroIndex + 1;
+            return marshalAs.Value switch
+            {
+                UnmanagedType.ByValTStr => Encoding.ASCII.GetString(reader.ReadBytes(marshalAs.SizeConst)).TrimEnd('\0'),
+                _ => throw new NotSupportedException()
+            };
         }
+        if (memberType == typeof(byte[]))
+        {
+            return marshalAs.Value switch
+            {
+                UnmanagedType.ByValArray => reader.ReadBytes(marshalAs.SizeConst),
+                _ => throw new NotSupportedException()
+            };
+        }
+        throw new NotSupportedException();
     }
 }

@@ -1,7 +1,4 @@
 ﻿using System.Diagnostics;
-using System.IO.Compression;
-using System.Text;
-using System.Xml;
 
 namespace ArxOne.Rpm;
 
@@ -12,8 +9,8 @@ public class RpmReader
     private readonly Stream _inputStream;
     private readonly Deserializer _deserializer;
 
-    public IReadOnlyDictionary<RpmTag, object?> Signature { get; private set; }
-    public IReadOnlyDictionary<RpmTag, object?> Header { get; private set; }
+    public RpmDictionary? Signature { get; private set; }
+    public RpmDictionary? Header { get; private set; }
 
     public RpmReader(Stream inputStream)
     {
@@ -59,17 +56,7 @@ public class RpmReader
         return Header;
     }
 
-    private IReadOnlyDictionary<RpmTag, object?> ReadHeaderIndexes()
-    {
-        var (headerIndexes, blob) = ReadRawHeaderIndexes();
-
-        var tags = new Dictionary<RpmTag, object?>();
-        foreach (var headerIndex in headerIndexes)
-            tags[headerIndex.Tag] = _deserializer.ReadValue(blob, headerIndex.Offset, headerIndex.Type, headerIndex.Count);
-        return tags;
-    }
-
-    private (RpmHeaderIndex[] HeaderIndexes, byte[] Blob) ReadRawHeaderIndexes()
+    private RpmDictionary ReadHeaderIndexes()
     {
         var alignTo8 = _inputStream.Position % 8;
         if (alignTo8 > 0)
@@ -84,6 +71,6 @@ public class RpmReader
         var blob = new byte[header.HSize];
         _inputStream.Read(blob);
 
-        return (headerIndexes, blob);
+        return new(headerIndexes, blob);
     }
 }

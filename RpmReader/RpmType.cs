@@ -11,5 +11,5 @@ public enum RpmType
     String = 6,
     Bin = 7,
     StringArray = 8,
-    I18Nstring = 9,
+    I18NString = 9,
 }
