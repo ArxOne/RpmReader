@@ -69,7 +69,7 @@ public class RpmReader
             headerIndexes[index] = _deserializer.Deserialize<RpmHeaderIndex>(_inputStream);
 
         var blob = new byte[header.HSize];
-        _inputStream.Read(blob);
+        _inputStream.ReadExactly(blob);
 
         return new(headerIndexes, blob);
     }
